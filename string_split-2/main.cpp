@@ -44,15 +44,15 @@ namespace fs = std::filesystem;
 #include <string_split.hpp>
 
 
-template<typename CharT, typename Input>
-[[ nodiscard ]] constexpr std::basic_string_view<CharT> to_string_view ( Input x ) noexcept {
-    if constexpr ( std::is_same<Input, std::basic_string_view<CharT>>::value ) {
+template<typename CharT, typename StringyThing>
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> to_string_view ( StringyThing x ) noexcept {
+    if constexpr ( std::is_same<StringyThing, std::basic_string_view<CharT>>::value ) {
         return x; // RVO.
     }
-    else if constexpr ( std::is_same<Input, CharT>::value ) {
+    if constexpr ( std::is_same<StringyThing, CharT>::value ) {
         return std::basic_string_view<CharT> ( std::addressof ( x ), 1 );
     }
-    else if constexpr ( std::is_same<Input, const CharT *>::value ) {
+    if constexpr ( std::is_same<StringyThing, const CharT *>::value ) {
         return std::basic_string_view<CharT> ( x );
     }
 }
