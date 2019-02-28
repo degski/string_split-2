@@ -44,6 +44,60 @@ namespace fs = std::filesystem;
 #include <string_split.hpp>
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 template<typename CharT, typename StringyThing>
 [[ nodiscard ]] constexpr std::basic_string_view<CharT> to_string_view ( StringyThing x ) noexcept {
     if constexpr ( std::is_same<StringyThing, std::basic_string_view<CharT>>::value ) {
