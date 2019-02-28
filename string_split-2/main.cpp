@@ -103,43 +103,54 @@ constexpr void remove_ends_with ( std::basic_string_view<CharT> & s, bool & remo
 
 
 template<typename CharT, typename ... Args>
-void remove_prefix ( std::basic_string_view<CharT> & v_, Args ... args_ ) noexcept {
-    bool removed;
+constexpr void remove_prefix ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
+    bool removed = false;
     do {
         removed = false;
-        ( remove_starts_with ( v_, removed, std::forward<Args> ( args_ ) ), ... );
+        ( remove_starts_with ( s_, removed, std::forward<Args> ( args_ ) ), ... );
     } while ( removed ); // Keep removing untill nothing more can be removed.
 }
 
 template<typename CharT, typename ... Args>
-void remove_suffix ( std::basic_string_view<CharT> & v_, Args ... args_ ) noexcept {
-    bool removed;
+constexpr void remove_suffix ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
+    bool removed = false;
     do {
         removed = false;
-        ( remove_ends_with ( v_, removed, std::forward<Args> ( args_ ) ), ... );
+        ( remove_ends_with ( s_, removed, std::forward<Args> ( args_ ) ), ... );
     } while ( removed ); // Keep removing untill nothing more can be removed.
 }
 
 
 template<typename CharT, typename SizeT>
-constexpr void find_first_of ( std::basic_string_view<CharT> s, SizeT & f_, std::basic_string_view<CharT> x ) noexcept {
+constexpr void find_first_of ( std::basic_string_view<CharT> & s, SizeT & f_, std::basic_string_view<CharT> x ) noexcept {
     f_ = std::min ( s.find_first_of ( x ), f_ );
 }
 template<typename CharT, typename SizeT>
-constexpr void find_first_of ( std::basic_string_view<CharT> s, SizeT & f_, CharT x ) noexcept {
+constexpr void find_first_of ( std::basic_string_view<CharT> & s, SizeT & f_, CharT x ) noexcept {
     f_ = std::min ( s.find_first_of ( std::basic_string_view<CharT> ( std::addressof ( x ), 1 ) ), f_ );
 }
 template<typename CharT, typename SizeT>
-constexpr void find_first_of ( std::basic_string_view<CharT> s, SizeT & f_, const CharT * x ) noexcept {
+constexpr void find_first_of ( std::basic_string_view<CharT> & s, SizeT & f_, const CharT * x ) noexcept {
     f_ = std::min ( s.find_first_of ( std::basic_string_view<CharT> ( x ) ), f_ );
 }
 
 template<typename CharT, typename ... Args>
-[[ nodiscard ]] constexpr auto find_first_of ( std::basic_string_view<CharT> & v_, Args ... args_ ) noexcept {
+[[ nodiscard ]] constexpr auto find_first_of ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
     auto found = std::basic_string_view<CharT>::npos;
-    ( find_first_of ( v_, found, std::forward<Args> ( args_ ) ), ... );
+    ( find_first_of ( s_, found, std::forward<Args> ( args_ ) ), ... );
     return found;
 }
+
+
+
+template<typename Stream, typename Container>
+Stream & operator << ( Stream & out_, const Container & s_ ) noexcept {
+    for ( const auto & v : s_ )
+        out_ << '\"' << v << "\" ";
+    out_ << '\b';
+    return out_;
+}
+
 
 
 template<typename CharT, typename ... Delimiters>
@@ -147,13 +158,20 @@ template<typename CharT, typename ... Delimiters>
     using size_type = typename std::basic_string_view<CharT>::size_type;
     std::basic_string_view<CharT> string_view ( string_ );
     std::vector<std::basic_string_view<CharT>> string_view_vector;
-    string_view_vector.reserve ( 4 );
+    string_view_vector.reserve ( 4 ); // Avoid small size re-allocating, 0 > 1 > 2 > 3 > 4 > 6, now 4 > 6 > 9 etc.
     // Remove trailing delimiters.
     remove_suffix ( string_view, std::forward<Delimiters> ( delimiters_ ) ... );
     // Parse the string_view left to right.
+    int c = 0;
     while ( true ) {
+        ++c;
+        if ( 100 == c )
+            break;
+        std::cout << string_view_vector << " - ";
         remove_prefix ( string_view, std::forward<Delimiters> ( delimiters_ ) ... );
+        std::cout << '*' << string_view << '*' << " pos: ";
         const size_type pos = find_first_of ( string_view, std::forward<Delimiters> ( delimiters_ ) ... );
+        std::cout << pos << nl;
         if ( std::basic_string_view<CharT>::npos == pos ) {
             string_view_vector.emplace_back ( std::move ( string_view ) );
             break;
@@ -165,21 +183,11 @@ template<typename CharT, typename ... Delimiters>
 }
 
 
-
-template<typename Stream, typename Container>
-Stream & operator << ( Stream & out_, const Container & v_ ) noexcept {
-    for ( const auto & v : v_ )
-        out_ << '\"' << v << "\" ";
-    out_ << '\b';
-    return out_;
-}
-
-
 int main ( ) {
 
-    std::string s ( " , \t the quick brown fox jumps over the lazy dog      ," );
+    std::string s ( " , \t the quick brown ,fox jumps over uit   , the lazy dog      ," );
 
-    auto split = string_split ( s, ' ', ',', '\t' );
+    auto split = string_split ( s, " ", ",", "\t" );
 
     std::cout << split << nl;
 
