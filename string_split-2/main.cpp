@@ -57,8 +57,8 @@ template<typename CharT, typename StringyThing>
     }
 }
 
-template<typename CharT, typename SomeV>
-constexpr void remove_starts_with ( std::basic_string_view<CharT> & s, bool & removed, SomeV x_ ) noexcept {
+template<typename CharT, typename StringyThing>
+constexpr void remove_starts_with ( std::basic_string_view<CharT> & s, bool & removed, StringyThing x_ ) noexcept {
     const std::basic_string_view<CharT> x = to_string_view<CharT> ( x_ );
     if ( s.size ( ) >= x.size ( ) and s.compare ( 0, x.size ( ), x ) == 0 ) {
         s.remove_prefix ( x.size ( ) );
@@ -66,8 +66,8 @@ constexpr void remove_starts_with ( std::basic_string_view<CharT> & s, bool & re
     };
 }
 
-template<typename CharT, typename SomeV>
-constexpr void remove_ends_with ( std::basic_string_view<CharT> & s, bool & removed, SomeV x_ ) noexcept {
+template<typename CharT, typename StringyThing>
+constexpr void remove_ends_with ( std::basic_string_view<CharT> & s, bool & removed, StringyThing x_ ) noexcept {
     const std::basic_string_view<CharT> x = to_string_view<CharT> ( x_ );
     if ( s.size ( ) >= x.size ( ) && s.compare ( s.size ( ) - x.size ( ), std::basic_string_view<CharT>::npos, x ) == 0 ) {
         s.remove_suffix ( x.size ( ) );
@@ -93,8 +93,8 @@ constexpr void remove_suffix ( std::basic_string_view<CharT> & s_, Args ... args
     } while ( removed ); // Keep removing untill nothing more can be removed.
 }
 
-template<typename CharT, typename SizeT, typename SomeV>
-constexpr void find_first_of ( std::basic_string_view<CharT> & s, SizeT & f_, SomeV x_ ) noexcept {
+template<typename CharT, typename SizeT, typename StringyThing>
+constexpr void find_first_of ( std::basic_string_view<CharT> & s, SizeT & f_, StringyThing x_ ) noexcept {
     f_ = std::min ( s.find_first_of ( to_string_view<CharT> ( x_ ) ), f_ );
 }
 
