@@ -38,7 +38,6 @@
 #include <type_traits>
 #include <vector>
 
-
 namespace fs = std::filesystem;
 
 
@@ -104,7 +103,7 @@ constexpr void remove_ends_with ( std::basic_string_view<CharT> & s, bool & remo
 
 
 template<typename CharT, typename ... Args>
-void remove_prefix ( std::basic_string_view<CharT> & v_, Args && ... args_ ) noexcept {
+void remove_prefix ( std::basic_string_view<CharT> & v_, Args ... args_ ) noexcept {
     bool removed;
     do {
         removed = false;
@@ -113,7 +112,7 @@ void remove_prefix ( std::basic_string_view<CharT> & v_, Args && ... args_ ) noe
 }
 
 template<typename CharT, typename ... Args>
-void remove_suffix ( std::basic_string_view<CharT> & v_, Args && ... args_ ) noexcept {
+void remove_suffix ( std::basic_string_view<CharT> & v_, Args ... args_ ) noexcept {
     bool removed;
     do {
         removed = false;
@@ -142,36 +141,45 @@ constexpr auto find_first_of ( std::basic_string_view<CharT> & v_, Args ... args
     return found;
 }
 
+template<typename CharT, typename ... Delimiters>
+[[ nodiscard ]] std::vector<std::basic_string_view<CharT>> string_split ( const std::basic_string<CharT> & string_, Delimiters ... delimiters_ ) {
+    using size_type = typename std::basic_string_view<CharT>::size_type;
+    std::basic_string_view<CharT> string_view ( string_ );
+    std::vector<std::basic_string_view<CharT>> string_view_vector;
+    string_view_vector.reserve ( 4 );
+    // Remove trailing and leading delimiters.
+    remove_prefix ( string_view, std::forward<Delimiters> ( delimiters_ ) ... );
+    remove_suffix ( string_view, std::forward<Delimiters> ( delimiters_ ) ... );
+    // Parse the string_view left to right.
+    while ( true ) {
+        const size_type pos = find_first_of ( string_view, std::forward<Delimiters> ( delimiters_ ) ... );
+        if ( std::basic_string_view<CharT>::npos == pos )
+            break;
+        string_view_vector.emplace_back ( string_view.data ( ), pos );
+        string_view.remove_prefix ( pos );
+        remove_prefix ( string_view, std::forward<Delimiters> ( delimiters_ ) ... );
+    }
+    return string_view_vector;
+}
 
+
+
+template<typename Stream, typename Container>
+Stream & operator << ( Stream & out_, const Container & v_ ) noexcept {
+    for ( const auto & v : v_ )
+        out_ << '\"' << v << "\" ";
+    out_ << '\b';
+    return out_;
+}
 
 
 int main ( ) {
 
     std::string s ( " , \t the quick brown fox jumps over the lazy dog      ," );
 
-    std::string_view v ( s );
+    auto split = string_split ( s, ' ', ',', '\t' );
 
-    remove_prefix ( v, " ", ',', "\t" );
-    remove_suffix ( v, " ", ",", "\t" );
-
-    std::cout << '*' << v << '*' << nl;
-
-    std::size_t p = 0;
-
-    std::cout << ( p = find_first_of ( v, " ", ",", "\t", "and" ) ) << nl;
-
-    std::string_view f = v.substr ( 0, p );
-
-    std::cout << f << nl;
-
-    v.remove_prefix ( p );
-    remove_prefix ( v, " ", ",", "\t", "and" );
-
-    std::cout << ( p = find_first_of ( v, " ", ",", "\t", "and" ) ) << nl;
-
-    f = v.substr ( 0, p );
-
-    std::cout << f << nl;
+    std::cout << split << nl;
 
     return EXIT_SUCCESS;
 }
