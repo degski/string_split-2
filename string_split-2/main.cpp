@@ -153,8 +153,10 @@ template<typename CharT, typename ... Delimiters>
     // Parse the string_view left to right.
     while ( true ) {
         const size_type pos = find_first_of ( string_view, std::forward<Delimiters> ( delimiters_ ) ... );
-        if ( std::basic_string_view<CharT>::npos == pos )
+        if ( std::basic_string_view<CharT>::npos == pos ) {
+            string_view_vector.emplace_back ( std::move ( string_view ) );
             break;
+        }
         string_view_vector.emplace_back ( string_view.data ( ), pos );
         string_view.remove_prefix ( pos );
         remove_prefix ( string_view, std::forward<Delimiters> ( delimiters_ ) ... );
