@@ -99,59 +99,59 @@ namespace fs = std::filesystem;
 
 
 template<typename CharT, typename StringyThing>
-[[ nodiscard ]] constexpr std::basic_string_view<CharT> to_string_view ( StringyThing x ) noexcept {
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( StringyThing x ) noexcept {
     if constexpr ( std::is_same<StringyThing, std::basic_string_view<CharT>>::value ) {
         return x; // RVO.
     }
     if constexpr ( std::is_same<StringyThing, CharT>::value ) {
         return std::basic_string_view<CharT> ( std::addressof ( x ), 1 );
     }
-    if constexpr ( std::is_same<StringyThing, const CharT *>::value ) {
+    if constexpr ( std::disjunction<std::is_same<StringyThing, const CharT *>, std::is_same<StringyThing, std::basic_string<CharT>>>::value ) {
         return std::basic_string_view<CharT> ( x );
     }
 }
 
+
 template<typename CharT, typename StringyThing>
-constexpr void remove_starts_with ( std::basic_string_view<CharT> & s, bool & removed, StringyThing x_ ) noexcept {
-    const std::basic_string_view<CharT> x = to_string_view<CharT> ( x_ );
+constexpr void remove_prefix ( std::basic_string_view<CharT> & s, bool & removed, StringyThing x_ ) noexcept {
+    const std::basic_string_view<CharT> x = make_string_view<CharT> ( x_ );
     if ( s.size ( ) >= x.size ( ) and s.compare ( 0, x.size ( ), x ) == 0 ) {
         s.remove_prefix ( x.size ( ) );
         removed = removed or true;
     };
 }
-
-template<typename CharT, typename StringyThing>
-constexpr void remove_ends_with ( std::basic_string_view<CharT> & s, bool & removed, StringyThing x_ ) noexcept {
-    const std::basic_string_view<CharT> x = to_string_view<CharT> ( x_ );
-    if ( s.size ( ) >= x.size ( ) && s.compare ( s.size ( ) - x.size ( ), std::basic_string_view<CharT>::npos, x ) == 0 ) {
-        s.remove_suffix ( x.size ( ) );
-        removed = removed or true;
-    };
-}
-
 template<typename CharT, typename ... Args>
 constexpr void remove_prefix ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
     bool removed = false;
     do {
         removed = false;
-        ( remove_starts_with ( s_, removed, std::forward<Args> ( args_ ) ), ... );
+        ( remove_prefix ( s_, removed, std::forward<Args> ( args_ ) ), ... );
     } while ( removed ); // Keep removing untill nothing more can be removed.
 }
 
+
+template<typename CharT, typename StringyThing>
+constexpr void remove_suffix ( std::basic_string_view<CharT> & s, bool & removed, StringyThing x_ ) noexcept {
+    const std::basic_string_view<CharT> x = make_string_view<CharT> ( x_ );
+    if ( s.size ( ) >= x.size ( ) and s.compare ( s.size ( ) - x.size ( ), std::basic_string_view<CharT>::npos, x ) == 0 ) {
+        s.remove_suffix ( x.size ( ) );
+        removed = removed or true;
+    };
+}
 template<typename CharT, typename ... Args>
 constexpr void remove_suffix ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
     bool removed = false;
     do {
         removed = false;
-        ( remove_ends_with ( s_, removed, std::forward<Args> ( args_ ) ), ... );
+        ( remove_suffix ( s_, removed, std::forward<Args> ( args_ ) ), ... );
     } while ( removed ); // Keep removing untill nothing more can be removed.
 }
 
+
 template<typename CharT, typename SizeT, typename StringyThing>
 constexpr void find_first_of ( std::basic_string_view<CharT> & s, SizeT & f_, StringyThing x_ ) noexcept {
-    f_ = std::min ( s.find_first_of ( to_string_view<CharT> ( x_ ) ), f_ );
+    f_ = std::min ( s.find_first_of ( make_string_view<CharT> ( x_ ) ), f_ );
 }
-
 template<typename CharT, typename ... Args>
 [[ nodiscard ]] constexpr auto find_first_of ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
     auto found = std::basic_string_view<CharT>::npos;
