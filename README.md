@@ -1,5 +1,5 @@
 
-# string_split-2
+# string_split-2 (C++17)
 
 
 A string splitter allowing for strings to be used as delimiters.
