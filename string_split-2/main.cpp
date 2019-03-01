@@ -123,27 +123,37 @@ template<typename CharT>
 
 
 
-template<typename CharT, typename StringyThing>
-[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( StringyThing x ) noexcept {
-    if constexpr ( std::is_same<StringyThing, std::basic_string_view<CharT>>::value ) {
-        return x; // RVO.
-    }
-    if constexpr ( std::is_same<StringyThing, CharT>::value ) {
-        return std::basic_string_view<CharT> ( std::addressof ( x ), 1 );
-    }
-    if constexpr ( std::disjunction<std::is_same<StringyThing, const CharT *>, std::is_same<StringyThing, std::basic_string<CharT>>>::value ) {
-        return std::basic_string_view<CharT> ( x );
-    }
+template<typename CharT>
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( std::basic_string_view<CharT> x ) noexcept {
+    return x; // RVO.
+}
+template<typename CharT>
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( CharT x ) noexcept {
+    return std::basic_string_view<CharT> ( std::addressof ( x ), 1 );
+}
+template<typename CharT>
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( const CharT * x ) noexcept {
+    return std::basic_string_view<CharT> ( x );
 }
 
 
-template<typename CharT, typename StringyThing>
-constexpr void remove_prefix ( std::basic_string_view<CharT> & s, bool & removed, StringyThing x_ ) noexcept {
-    const std::basic_string_view<CharT> x = make_string_view<CharT> ( x_ );
+template<typename CharT>
+constexpr void remove_prefix ( std::basic_string_view<CharT> & s, bool & removed, std::basic_string_view<CharT> x ) noexcept {
     if ( s.size ( ) >= x.size ( ) and s.compare ( 0, x.size ( ), x ) == 0 ) {
         s.remove_prefix ( x.size ( ) );
         removed = removed or true;
     };
+}
+template<typename CharT>
+constexpr void remove_prefix ( std::basic_string_view<CharT> & s, bool & removed, CharT x ) noexcept {
+    if ( s.size ( ) >= 1 and s [ 0 ] == x ) {
+        s.remove_prefix ( 1 );
+        removed = removed or true;
+    };
+}
+template<typename CharT>
+constexpr void remove_prefix ( std::basic_string_view<CharT> & s, bool & removed, const CharT * x ) noexcept {
+    remove_prefix ( s, removed, std::basic_string_view<CharT> ( x ) );
 }
 template<typename CharT, typename ... Args>
 constexpr void remove_prefix ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
@@ -155,13 +165,20 @@ constexpr void remove_prefix ( std::basic_string_view<CharT> & s_, Args ... args
 }
 
 
-template<typename CharT, typename StringyThing>
-constexpr void remove_suffix ( std::basic_string_view<CharT> & s, bool & removed, StringyThing x_ ) noexcept {
-    const std::basic_string_view<CharT> x = make_string_view<CharT> ( x_ );
+template<typename CharT>
+constexpr void remove_suffix ( std::basic_string_view<CharT> & s, bool & removed, std::basic_string_view<CharT> x ) noexcept {
     if ( s.size ( ) >= x.size ( ) and s.compare ( s.size ( ) - x.size ( ), std::basic_string_view<CharT>::npos, x ) == 0 ) {
         s.remove_suffix ( x.size ( ) );
         removed = removed or true;
     };
+}
+template<typename CharT>
+constexpr void remove_suffix ( std::basic_string_view<CharT> & s, bool & removed, CharT x ) noexcept {
+    remove_suffix ( s, removed, std::basic_string_view<CharT> ( std::addressof ( x ), 1 ) );
+}
+template<typename CharT>
+constexpr void remove_suffix ( std::basic_string_view<CharT> & s, bool & removed, const CharT * x ) noexcept {
+    remove_suffix ( s, removed, std::basic_string_view<CharT> ( x ) );
 }
 template<typename CharT, typename ... Args>
 constexpr void remove_suffix ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
@@ -219,11 +236,23 @@ template<typename CharT, typename ... Delimiters>
 
 int main ( ) {
 
-    std::string s ( " , \t the quick brown ,fox jumps over uit   , the lazy dog      ," );
+    std::string s ( " , \t the quick brown ,fox jumps uitover uit   , the lazy dog      ," );
 
-    auto split = string_split ( s, " ", ",", "\t", "uit" );
+    std::cout << string_split ( s, " ", ',', "\t", "uit" ) << nl;
 
-    std::cout << split << nl;
+    /*
+    std::string_view v ( s );
+
+    remove_prefix ( v, " ", ',', "\t", "uit" );
+
+    std::cout << '*' << v << '*' << nl;
+
+    bool removed = false;
+
+    remove_prefix ( v, removed, ',' );
+
+    std::cout << '*' << v << '*' << ' ' << std::boolalpha << removed << nl;
+    */
 
     return EXIT_SUCCESS;
 }
