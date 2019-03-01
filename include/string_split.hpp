@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <sax/iostream.hpp>
 #include <string>
 #include <string_view>
