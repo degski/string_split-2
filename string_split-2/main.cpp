@@ -172,7 +172,7 @@ Stream & operator << ( Stream & out_, const Container & s_ ) noexcept {
 
 
 template<typename CharT, typename ... Delimiters>
-[[ nodiscard ]] std::vector<std::basic_string_view<CharT>> string_split ( const std::basic_string<CharT> & string_, Delimiters ... delimiters_ ) {
+[[ nodiscard ]] std::vector<std::basic_string_view<CharT>> string_split_impl ( const std::basic_string<CharT> & string_, Delimiters ... delimiters_ ) {
     using size_type = typename std::basic_string_view<CharT>::size_type;
     std::basic_string_view<CharT> string_view ( string_ );
     std::vector<std::basic_string_view<CharT>> string_view_vector;
@@ -193,6 +193,33 @@ template<typename CharT, typename ... Delimiters>
     return string_view_vector;
 }
 
+
+
+template <typename CharT, typename ... Delimiters, std::size_t ... I>
+auto make_string_views ( const std::tuple<Delimiters ... > & delimiters_, std::index_sequence<I...> ) {
+    return std::make_tuple ( make_string_view<CharT> ( std::get<I> ( delimiters_ ) ) ... );
+}
+template <typename CharT, typename ... Delimiters>
+auto make_string_views ( Delimiters ... delimiters_ ) {
+    return make_string_views<CharT> ( std::forward_as_tuple ( delimiters_ ... ), std::make_index_sequence<sizeof ... ( Delimiters )> ( ) );
+}
+
+template<typename CharT>
+using sv = std::basic_string_view<CharT>;
+
+template<typename CharT, typename ... Delimiters>
+[[ nodiscard ]] std::vector<std::basic_string_view<CharT>> string_split ( const std::basic_string<CharT> & string_, Delimiters ... delimiters_ ) {
+
+    std::tuple<sv<CharT>, sv<CharT>, sv<CharT>, sv<CharT>> tuple = make_string_views<CharT> ( std::forward<Delimiters> ( delimiters_ ) ... );
+
+    std::cout << '*' << std::get<0> ( tuple ) << '*' << nl;
+    std::cout << '*' << std::get<1> ( tuple ) << '*' << nl;
+    std::cout << '*' << std::get<2> ( tuple ) << '*' << nl;
+    std::cout << '*' << std::get<3> ( tuple ) << '*' << nl << nl;
+
+
+    return std::apply ( string_split_impl<CharT, Delimiters ... >, std::tuple_cat ( std::forward_as_tuple ( string_ ), std::forward_as_tuple ( delimiters_ ... ) ) );
+}
 
 int main ( ) {
 
