@@ -149,13 +149,13 @@ constexpr void remove_suffix ( std::basic_string_view<CharT> & s_, Args ... args
 
 
 template<typename CharT, typename SizeT, typename StringyThing>
-constexpr void find_first_of ( std::basic_string_view<CharT> & s, SizeT & f_, StringyThing x_ ) noexcept {
-    f_ = std::min ( s.find_first_of ( make_string_view<CharT> ( x_ ) ), f_ );
+constexpr void find ( std::basic_string_view<CharT> & s, SizeT & f_, StringyThing x_ ) noexcept {
+    f_ = std::min ( s.find ( make_string_view<CharT> ( x_ ) ), f_ );
 }
 template<typename CharT, typename ... Args>
-[[ nodiscard ]] constexpr auto find_first_of ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
+[[ nodiscard ]] constexpr auto find ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
     auto found = std::basic_string_view<CharT>::npos;
-    ( find_first_of ( s_, found, std::forward<Args> ( args_ ) ), ... );
+    ( find ( s_, found, std::forward<Args> ( args_ ) ), ... );
     return found;
 }
 
@@ -180,16 +180,9 @@ template<typename CharT, typename ... Delimiters>
     // Remove trailing delimiters.
     remove_suffix ( string_view, std::forward<Delimiters> ( delimiters_ ) ... );
     // Parse the string_view left to right.
-    int c = 0;
     while ( true ) {
-        ++c;
-        if ( 100 == c )
-            break;
-        std::cout << string_view_vector << " - ";
         remove_prefix ( string_view, std::forward<Delimiters> ( delimiters_ ) ... );
-        std::cout << '*' << string_view << '*' << " pos: ";
-        const size_type pos = find_first_of ( string_view, std::forward<Delimiters> ( delimiters_ ) ... );
-        std::cout << pos << nl;
+        const size_type pos = find ( string_view, std::forward<Delimiters> ( delimiters_ ) ... );
         if ( std::basic_string_view<CharT>::npos == pos ) {
             string_view_vector.emplace_back ( std::move ( string_view ) );
             break;
@@ -205,7 +198,7 @@ int main ( ) {
 
     std::string s ( " , \t the quick brown ,fox jumps over uit   , the lazy dog      ," );
 
-    auto split = string_split ( s, " ", ",", "\t" );
+    auto split = string_split ( s, " ", ",", "\t", "uit" );
 
     std::cout << split << nl;
 
