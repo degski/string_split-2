@@ -1,7 +1,7 @@
 
 // MIT License
 //
-// Copyright (c) 2018, 2019 degski
+// Copyright (c) 2019 degski
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -54,15 +54,15 @@ Stream & operator << ( Stream & out_, const Container & s_ ) noexcept {
 
 int main ( ) {
 
-    std::string s ( " , \t the quick brown ,fox jumps uitover uit   , the lazy dog      ," );
+    std::string s ( " , \t the quick brown ,, ,fox jumps underover \t  , the lazy dog      ," );
 
-    std::cout << sax::string_split ( s, " ", ',', "\t", "uit" ) << nl;
+    std::cout << sax::string_split ( s, " ", ',', "\t", "under" ) << nl;
 
     return EXIT_SUCCESS;
 }
 
 
-
+/*
 
 template <typename CharT, typename ... Delimiters, std::size_t ... I>
 auto make_string_views ( const std::tuple<Delimiters ... > & delimiters_, std::index_sequence<I...> ) {
@@ -72,3 +72,5 @@ template <typename CharT, typename ... Delimiters>
 auto make_string_views ( Delimiters ... delimiters_ ) {
     return make_string_views<CharT> ( std::forward_as_tuple ( delimiters_ ... ), std::make_index_sequence<sizeof ... ( Delimiters )> ( ) );
 }
+
+*/

@@ -57,42 +57,42 @@ namespace sax::detail {
 /*
 
 template<typename CharT>
-[ [ nodiscard ] ] constexpr bool starts_with ( std::basic_string_view<CharT> s, std::basic_string_view<CharT> x ) noexcept {
+[[ nodiscard ]] constexpr bool starts_with ( std::basic_string_view<CharT> s, std::basic_string_view<CharT> x ) noexcept {
     return s.size ( ) >= x.size ( ) and s.compare ( 0, x.size ( ), x ) == 0;
 }
 template<typename CharT>
-[ [ nodiscard ] ] constexpr bool starts_with ( std::basic_string_view<CharT> s, CharT x ) noexcept {
+[[ nodiscard ]] constexpr bool starts_with ( std::basic_string_view<CharT> s, CharT x ) noexcept {
     return starts_with ( s, std::basic_string_view<CharT> ( std::addressof ( x ), 1 ) );
 }
 template<typename CharT>
-[ [ nodiscard ] ] constexpr bool starts_with ( std::basic_string_view<CharT> s, const CharT * x ) noexcept {
+[[ nodiscard ]] constexpr bool starts_with ( std::basic_string_view<CharT> s, const CharT * x ) noexcept {
     return starts_with ( s, std::basic_string_view<CharT> ( x ) );
 }
 template<typename CharT>
-[ [ nodiscard ] ] constexpr bool ends_with ( std::basic_string_view<CharT> s, std::basic_string_view<CharT> x ) noexcept {
+[[ nodiscard ]] constexpr bool ends_with ( std::basic_string_view<CharT> s, std::basic_string_view<CharT> x ) noexcept {
     return s.size ( ) >= x.size ( ) && s.compare ( s.size ( ) - x.size ( ), std::basic_string_view<CharT>::npos, x ) == 0;
 }
 template<typename CharT>
-[ [ nodiscard ] ] constexpr bool ends_with ( std::basic_string_view<CharT> s, CharT x ) noexcept {
+[[ nodiscard ]] constexpr bool ends_with ( std::basic_string_view<CharT> s, CharT x ) noexcept {
     return ends_with ( s, std::basic_string_view<CharT> ( std::addressof ( x ), 1 ) );
 }
 template<typename CharT>
-[ [ nodiscard ] ] constexpr bool ends_with ( std::basic_string_view<CharT> s, const CharT * x ) noexcept {
+[[ nodiscard ]] constexpr bool ends_with ( std::basic_string_view<CharT> s, const CharT * x ) noexcept {
     return ends_with ( s, std::basic_string_view<CharT> ( x ) );
 }
 
 */
 
 template<typename CharT>
-[ [ nodiscard ] ] constexpr std::basic_string_view<CharT> make_string_view ( std::basic_string_view<CharT> x ) noexcept {
-    return x; // RVO.
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( std::basic_string_view<CharT> x ) noexcept {
+    return x; // guaranteed copy elision.
 }
 template<typename CharT>
-[ [ nodiscard ] ] constexpr std::basic_string_view<CharT> make_string_view ( CharT x ) noexcept {
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( CharT x ) noexcept {
     return std::basic_string_view<CharT> ( std::addressof ( x ), 1 );
 }
 template<typename CharT>
-[ [ nodiscard ] ] constexpr std::basic_string_view<CharT> make_string_view ( const CharT * x ) noexcept {
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( const CharT * x ) noexcept {
     return std::basic_string_view<CharT> ( x );
 }
 
@@ -155,7 +155,7 @@ constexpr void find ( std::basic_string_view<CharT> & s, SizeT & f_, StringyThin
     f_ = std::min ( s.find ( make_string_view<CharT> ( x_ ) ), f_ );
 }
 template<typename CharT, typename ... Args>
-[ [ nodiscard ] ] constexpr auto find ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
+[[ nodiscard ]] constexpr auto find ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
     auto found = std::basic_string_view<CharT>::npos;
     ( find ( s_, found, std::forward<Args> ( args_ ) ), ... );
     return found;
@@ -166,7 +166,7 @@ template<typename CharT, typename ... Args>
 namespace sax {
 
 template<typename CharT, typename ... Delimiters>
-[ [ nodiscard ] ] std::vector<std::basic_string_view<CharT>> string_split ( const std::basic_string<CharT> & string_, Delimiters ... delimiters_ ) {
+[[ nodiscard ]] std::vector<std::basic_string_view<CharT>> string_split ( const std::basic_string<CharT> & string_, Delimiters ... delimiters_ ) {
     using size_type = typename std::basic_string_view<CharT>::size_type;
     std::basic_string_view<CharT> string_view ( string_ );
     std::vector<std::basic_string_view<CharT>> string_view_vector;
