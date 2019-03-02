@@ -24,6 +24,7 @@
 #pragma once
 
 #include <algorithm>
+#include <functional>
 #include <sax/iostream.hpp>
 #include <string>
 #include <string_view>
@@ -85,15 +86,15 @@ template<typename CharT>
 */
 
 template<typename CharT>
-[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( std::basic_string_view<CharT> x ) noexcept {
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( std::basic_string_view<CharT> & x ) noexcept {
     return x; // guaranteed copy elision.
 }
 template<typename CharT>
-[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( CharT x ) noexcept {
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( CharT & x ) noexcept {
     return std::basic_string_view<CharT> ( std::addressof ( x ), 1 );
 }
 template<typename CharT>
-[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( const CharT * x ) noexcept {
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( const CharT * & x ) noexcept {
     return std::basic_string_view<CharT> ( x );
 }
 
@@ -104,17 +105,6 @@ constexpr void remove_prefix ( std::basic_string_view<CharT> & s, bool & removed
         s.remove_prefix ( x.size ( ) );
         removed = true;
     };
-}
-template<typename CharT>
-constexpr void remove_prefix ( std::basic_string_view<CharT> & s, bool & removed, CharT x ) noexcept {
-    if ( s.size ( ) >= 1 and s [ 0 ] == x ) {
-        s.remove_prefix ( 1 );
-        removed = true;
-    };
-}
-template<typename CharT>
-constexpr void remove_prefix ( std::basic_string_view<CharT> & s, bool & removed, const CharT * x ) noexcept {
-    remove_prefix ( s, removed, std::basic_string_view<CharT> ( x ) );
 }
 template<typename CharT, typename ... Args>
 constexpr void remove_prefix ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
@@ -133,14 +123,6 @@ constexpr void remove_suffix ( std::basic_string_view<CharT> & s, bool & removed
         removed = true;
     };
 }
-template<typename CharT>
-constexpr void remove_suffix ( std::basic_string_view<CharT> & s, bool & removed, CharT x ) noexcept {
-    remove_suffix ( s, removed, std::basic_string_view<CharT> ( std::addressof ( x ), 1 ) );
-}
-template<typename CharT>
-constexpr void remove_suffix ( std::basic_string_view<CharT> & s, bool & removed, const CharT * x ) noexcept {
-    remove_suffix ( s, removed, std::basic_string_view<CharT> ( x ) );
-}
 template<typename CharT, typename ... Args>
 constexpr void remove_suffix ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
     bool removed = false;
@@ -155,16 +137,9 @@ template<typename CharT, typename SizeT>
 constexpr void find ( std::basic_string_view<CharT> & s, SizeT & f_, std::basic_string_view<CharT> x_ ) noexcept {
     f_ = std::min ( s.find ( x_ ), f_ );
 }
-template<typename CharT, typename SizeT>
-constexpr void find ( std::basic_string_view<CharT> & s, SizeT & f_, CharT x_ ) noexcept {
-    f_ = std::min ( s.find ( std::basic_string_view<CharT> ( std::addressof ( x_ ), 1 ) ), f_ );
-}
-template<typename CharT, typename SizeT>
-constexpr void find ( std::basic_string_view<CharT> & s, SizeT & f_, const CharT * x_ ) noexcept {
-    f_ = std::min ( s.find ( std::basic_string_view<CharT> ( x_ ) ), f_ );
-}
 template<typename CharT, typename ... Args>
-[[ nodiscard ]] constexpr auto find ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
+[[ nodiscard ]] constexpr auto next ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
+    remove_prefix ( s_, std::forward<Args> ( args_ ) ... );
     auto found = std::basic_string_view<CharT>::npos;
     ( find ( s_, found, std::forward<Args> ( args_ ) ), ... );
     return found;
@@ -172,12 +147,12 @@ template<typename CharT, typename ... Args>
 
 
 template <typename CharT, typename ... Delimiters, std::size_t ... I>
-auto make_string_views ( const std::tuple<Delimiters && ... > & delimiters_, std::index_sequence<I...> ) {
+auto make_string_views ( const std::tuple<Delimiters & ... > & delimiters_, std::index_sequence<I...> ) {
     return std::make_tuple ( make_string_view<CharT> ( std::get<I> ( delimiters_ ) ) ... );
 }
 template <typename CharT, typename ... Delimiters>
-auto make_string_views ( Delimiters && ... delimiters_ ) {
-    return make_string_views<CharT> ( std::forward_as_tuple ( delimiters_ ... ), std::make_index_sequence<sizeof ... ( Delimiters )> ( ) );
+auto make_string_views ( Delimiters & ... delimiters_ ) {
+    return make_string_views<CharT> ( std::forward_as_tuple ( std::forward<Delimiters&> ( delimiters_ ) ... ), std::make_index_sequence<sizeof ... ( Delimiters )> ( ) );
 }
 
 }
@@ -188,18 +163,19 @@ template<typename CharT, typename ... Delimiters>
 [[ nodiscard ]] std::vector<std::basic_string_view<CharT>> string_split ( const std::basic_string<CharT> & string_, Delimiters ... delimiters_ ) {
     using size_type = typename std::basic_string_view<CharT>::size_type;
     if ( string_.empty ( ) )
-        return { string_ };
+        return { };
     std::basic_string_view<CharT> string_view ( string_ );
     std::vector<std::basic_string_view<CharT>> string_view_vector;
     string_view_vector.reserve ( 4 ); // Avoid small size re-allocating, 0 > 1 > 2 > 3 > 4 > 6, now 4 > 6 > 9 etc.
-    // Remove trailing delimiters.
-    detail::remove_suffix ( string_view, std::forward<Delimiters> ( delimiters_ ) ... );
+    std::tuple params = detail::make_string_views<CharT> ( std::forward<Delimiters&> ( delimiters_  ) ... );
     // Parse the string_view left to right.
     while ( true ) {
-        detail::remove_prefix ( string_view, std::forward<Delimiters> ( delimiters_ ) ... );
-        const size_type pos = detail::find ( string_view, std::forward<Delimiters> ( delimiters_ ) ... );
+        const size_type pos = std::apply ( [ & string_view ] ( auto && ... args ) {
+            return detail::next ( string_view, std::forward<decltype ( args )> ( args ) ... );
+        }, params );
         if ( std::basic_string_view<CharT>::npos == pos ) {
-            string_view_vector.emplace_back ( std::move ( string_view ) );
+            if ( string_view.size ( ) )
+                string_view_vector.emplace_back ( std::move ( string_view ) );
             break;
         }
         string_view_vector.emplace_back ( string_view.data ( ), pos );
