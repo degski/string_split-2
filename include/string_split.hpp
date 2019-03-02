@@ -107,7 +107,7 @@ constexpr void remove_prefix ( std::basic_string_view<CharT> & s, bool & removed
     };
 }
 template<typename CharT, typename ... Args>
-constexpr void remove_prefix ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
+constexpr void remove_prefix ( std::basic_string_view<CharT> & s_, Args && ... args_ ) noexcept {
     bool removed = false;
     do {
         removed = false;
@@ -124,7 +124,7 @@ constexpr void remove_suffix ( std::basic_string_view<CharT> & s, bool & removed
     };
 }
 template<typename CharT, typename ... Args>
-constexpr void remove_suffix ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
+constexpr void remove_suffix ( std::basic_string_view<CharT> & s_, Args && ... args_ ) noexcept {
     bool removed = false;
     do {
         removed = false;
@@ -138,7 +138,7 @@ constexpr void find ( std::basic_string_view<CharT> & s, SizeT & f_, std::basic_
     f_ = std::min ( s.find ( x_ ), f_ );
 }
 template<typename CharT, typename ... Args>
-[[ nodiscard ]] constexpr auto next ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
+[[ nodiscard ]] constexpr auto next ( std::basic_string_view<CharT> & s_, Args && ... args_ ) noexcept {
     remove_prefix ( s_, std::forward<Args> ( args_ ) ... );
     auto found = std::basic_string_view<CharT>::npos;
     ( find ( s_, found, std::forward<Args> ( args_ ) ), ... );
@@ -152,7 +152,7 @@ template <typename CharT, typename ... Delimiters, std::size_t ... I>
 }
 template <typename CharT, typename ... Delimiters>
 [[ nodiscard ]] constexpr auto make_string_views ( const Delimiters & ... delimiters_ ) noexcept {
-    return make_string_views<CharT> ( std::forward_as_tuple ( std::forward<const Delimiters&> ( delimiters_ ) ... ), std::make_index_sequence<sizeof ... ( Delimiters )> ( ) );
+    return make_string_views<CharT> ( std::forward_as_tuple ( delimiters_ ... ), std::make_index_sequence<sizeof ... ( Delimiters )> ( ) );
 }
 
 }
