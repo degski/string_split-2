@@ -98,6 +98,15 @@ template<typename CharT>
     return std::basic_string_view<CharT> ( x );
 }
 
+template <typename CharT, typename ... Delimiters, std::size_t ... I>
+[ [ nodiscard ] ] constexpr auto make_string_views ( const std::tuple<const Delimiters & ... > & delimiters_, std::index_sequence<I...> ) noexcept {
+    return std::make_tuple ( make_string_view<CharT> ( std::get<I> ( delimiters_ ) ) ... );
+}
+template <typename CharT, typename ... Delimiters>
+[ [ nodiscard ] ] constexpr auto make_string_views ( const Delimiters & ... delimiters_ ) noexcept {
+    return make_string_views<CharT> ( std::forward_as_tuple ( delimiters_ ... ), std::make_index_sequence<sizeof ... ( Delimiters )> ( ) );
+}
+
 
 template<typename CharT>
 constexpr void remove_prefix ( std::basic_string_view<CharT> & s, bool & removed, const std::basic_string_view<CharT> x ) noexcept {
@@ -145,14 +154,16 @@ template<typename CharT, typename ... Args>
     return found;
 }
 
-
-template <typename CharT, typename ... Delimiters, std::size_t ... I>
-[[ nodiscard ]] constexpr auto make_string_views ( const std::tuple<const Delimiters & ... > & delimiters_, std::index_sequence<I...> ) noexcept {
-    return std::make_tuple ( make_string_view<CharT> ( std::get<I> ( delimiters_ ) ) ... );
+template<typename CharT, typename SizeT>
+constexpr void anymatches ( std::basic_string_view<CharT> & s, SizeT & length, const std::basic_string_view<CharT> x ) noexcept {
+    if ( s.size ( ) >= x.size ( ) and s.compare ( 0, x.size ( ), x ) == 0 )
+        length = x.size ( );
 }
-template <typename CharT, typename ... Delimiters>
-[[ nodiscard ]] constexpr auto make_string_views ( const Delimiters & ... delimiters_ ) noexcept {
-    return make_string_views<CharT> ( std::forward_as_tuple ( delimiters_ ... ), std::make_index_sequence<sizeof ... ( Delimiters )> ( ) );
+template<typename CharT, typename ... Args>
+[[ nodiscard ]] constexpr auto anymatches ( std::basic_string_view<CharT> & s_, Args && ... args_ ) noexcept {
+    decltype ( std::basic_string_view<CharT>::npos ) found = 0;
+    ( anymatches ( s_, found, std::forward<Args> ( args_ ) ), ... );
+    return found;
 }
 
 }
@@ -167,13 +178,15 @@ template<typename CharT, typename ... Delimiters>
     std::basic_string_view<CharT> string_view ( string_ );
     std::vector<std::basic_string_view<CharT>> string_view_vector;
     string_view_vector.reserve ( 4 ); // Avoid small size re-allocating, 0 > 1 > 2 > 3 > 4 > 6, now 4 > 6 > 9 etc.
-    const auto next = [ & string_view ] ( auto && ... args ) noexcept {
-        return detail::next ( string_view, std::forward<decltype ( args )> ( args ) ... );
+    const auto anymatches = [ & string_view ] ( auto && ... args ) noexcept {
+        return detail::anymatches ( string_view, std::forward<decltype ( args )> ( args ) ... );
     };
     const std::tuple params = detail::make_string_views<CharT> ( std::forward<const Delimiters&> ( delimiters_ ) ... );
     // Parse the string_view left to right.
     while ( true ) {
-        const size_type pos = std::apply ( next, params );
+        const size_type pos = std::apply ( anymatches, params );
+
+
         if ( std::basic_string_view<CharT>::npos == pos ) {
             if ( string_view.size ( ) )
                 string_view_vector.emplace_back ( std::move ( string_view ) );
