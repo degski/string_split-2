@@ -151,9 +151,17 @@ constexpr void remove_suffix ( std::basic_string_view<CharT> & s_, Args ... args
 }
 
 
-template<typename CharT, typename SizeT, typename StringyThing>
-constexpr void find ( std::basic_string_view<CharT> & s, SizeT & f_, StringyThing x_ ) noexcept {
-    f_ = std::min ( s.find ( make_string_view<CharT> ( x_ ) ), f_ );
+template<typename CharT, typename SizeT>
+constexpr void find ( std::basic_string_view<CharT> & s, SizeT & f_, std::basic_string_view<CharT> x_ ) noexcept {
+    f_ = std::min ( s.find ( x_ ), f_ );
+}
+template<typename CharT, typename SizeT>
+constexpr void find ( std::basic_string_view<CharT> & s, SizeT & f_, CharT x_ ) noexcept {
+    f_ = std::min ( s.find ( std::basic_string_view<CharT> ( std::addressof ( x_ ), 1 ) ), f_ );
+}
+template<typename CharT, typename SizeT>
+constexpr void find ( std::basic_string_view<CharT> & s, SizeT & f_, const CharT * x_ ) noexcept {
+    f_ = std::min ( s.find ( std::basic_string_view<CharT> ( x_ ) ), f_ );
 }
 template<typename CharT, typename ... Args>
 [[ nodiscard ]] constexpr auto find ( std::basic_string_view<CharT> & s_, Args ... args_ ) noexcept {
@@ -162,12 +170,22 @@ template<typename CharT, typename ... Args>
     return found;
 }
 
+
+template <typename CharT, typename ... Delimiters, std::size_t ... I>
+auto make_string_views ( const std::tuple<Delimiters && ... > & delimiters_, std::index_sequence<I...> ) {
+    return std::make_tuple ( make_string_view<CharT> ( std::get<I> ( delimiters_ ) ) ... );
+}
+template <typename CharT, typename ... Delimiters>
+auto make_string_views ( Delimiters && ... delimiters_ ) {
+    return make_string_views<CharT> ( std::forward_as_tuple ( delimiters_ ... ), std::make_index_sequence<sizeof ... ( Delimiters )> ( ) );
+}
+
 }
 
 namespace sax {
 
 template<typename CharT, typename ... Delimiters>
-[[ nodiscard ]] std::vector<std::basic_string_view<CharT>> string_split ( const std::basic_string<CharT> & string_, Delimiters && ... delimiters_ ) {
+[[ nodiscard ]] std::vector<std::basic_string_view<CharT>> string_split ( const std::basic_string<CharT> & string_, Delimiters ... delimiters_ ) {
     using size_type = typename std::basic_string_view<CharT>::size_type;
     if ( string_.empty ( ) )
         return { string_ };
