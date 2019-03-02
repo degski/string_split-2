@@ -147,11 +147,11 @@ template<typename CharT, typename ... Args>
 
 
 template <typename CharT, typename ... Delimiters, std::size_t ... I>
-auto make_string_views ( const std::tuple<const Delimiters & ... > & delimiters_, std::index_sequence<I...> ) {
+[[ nodiscard ]] constexpr auto make_string_views ( const std::tuple<const Delimiters & ... > & delimiters_, std::index_sequence<I...> ) noexcept {
     return std::make_tuple ( make_string_view<CharT> ( std::get<I> ( delimiters_ ) ) ... );
 }
 template <typename CharT, typename ... Delimiters>
-auto make_string_views ( const Delimiters & ... delimiters_ ) {
+[[ nodiscard ]] constexpr auto make_string_views ( const Delimiters & ... delimiters_ ) noexcept {
     return make_string_views<CharT> ( std::forward_as_tuple ( std::forward<const Delimiters&> ( delimiters_ ) ... ), std::make_index_sequence<sizeof ... ( Delimiters )> ( ) );
 }
 
@@ -167,7 +167,7 @@ template<typename CharT, typename ... Delimiters>
     std::basic_string_view<CharT> string_view ( string_ );
     std::vector<std::basic_string_view<CharT>> string_view_vector;
     string_view_vector.reserve ( 4 ); // Avoid small size re-allocating, 0 > 1 > 2 > 3 > 4 > 6, now 4 > 6 > 9 etc.
-    const auto next = [ & string_view ] ( auto && ... args ) {
+    const auto next = [ & string_view ] ( auto && ... args ) noexcept {
         return detail::next ( string_view, std::forward<decltype ( args )> ( args ) ... );
     };
     const std::tuple params = detail::make_string_views<CharT> ( std::forward<const Delimiters&> ( delimiters_ ) ... );
