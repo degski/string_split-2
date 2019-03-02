@@ -179,22 +179,22 @@ template<typename CharT, typename ... Delimiters>
     std::basic_string_view<CharT> string_view ( string_ );
     std::vector<std::basic_string_view<CharT>> string_view_vector;
     string_view_vector.reserve ( 4 ); // Avoid small size re-allocating, 0 > 1 > 2 > 3 > 4 > 6, now 4 > 6 > 9 etc.
-    auto any_matches = [ & string_view ] ( auto && ... args ) noexcept {
+    const auto any_matches = [ & string_view ] ( auto && ... args ) noexcept {
         return detail::any_matches ( string_view, std::forward<decltype ( args )> ( args ) ... );
     };
     const std::tuple params = detail::make_string_views<CharT> ( std::forward<const Delimiters&> ( delimiters_ ) ... );
-    while ( string_view.size ( ) ) {
+    do {
         size_type match_length;
         do {
             match_length = std::apply ( any_matches, params );
             string_view.remove_prefix ( match_length );
         } while ( match_length );
-        auto start = string_view.data ( );
+        const auto match_start = string_view.data ( );
         do {
             string_view.remove_prefix ( 1 );
         } while ( not ( std::apply ( any_matches, params ) ) );
-        string_view_vector.emplace_back ( start, string_view.data ( ) - start );
-    }
+        string_view_vector.emplace_back ( match_start, string_view.data ( ) - match_start );
+    } while ( string_view.size ( ) );
     return string_view_vector;
 }
 
