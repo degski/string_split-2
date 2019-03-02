@@ -167,10 +167,10 @@ template<typename CharT, typename ... Delimiters>
     std::basic_string_view<CharT> string_view ( string_ );
     std::vector<std::basic_string_view<CharT>> string_view_vector;
     string_view_vector.reserve ( 4 ); // Avoid small size re-allocating, 0 > 1 > 2 > 3 > 4 > 6, now 4 > 6 > 9 etc.
-    std::tuple params = detail::make_string_views<CharT> ( std::forward<const Delimiters&> ( delimiters_  ) ... );
-    auto next = [ & string_view ] ( auto && ... args ) {
+    const auto next = [ & string_view ] ( auto && ... args ) {
         return detail::next ( string_view, std::forward<decltype ( args )> ( args ) ... );
     };
+    const std::tuple params = detail::make_string_views<CharT> ( std::forward<const Delimiters&> ( delimiters_ ) ... );
     // Parse the string_view left to right.
     while ( true ) {
         const size_type pos = std::apply ( next, params );
