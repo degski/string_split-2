@@ -102,14 +102,14 @@ template<typename CharT>
 constexpr void remove_prefix ( std::basic_string_view<CharT> & s, bool & removed, std::basic_string_view<CharT> x ) noexcept {
     if ( s.size ( ) >= x.size ( ) and s.compare ( 0, x.size ( ), x ) == 0 ) {
         s.remove_prefix ( x.size ( ) );
-        removed = removed or true;
+        removed = true;
     };
 }
 template<typename CharT>
 constexpr void remove_prefix ( std::basic_string_view<CharT> & s, bool & removed, CharT x ) noexcept {
     if ( s.size ( ) >= 1 and s [ 0 ] == x ) {
         s.remove_prefix ( 1 );
-        removed = removed or true;
+        removed = true;
     };
 }
 template<typename CharT>
@@ -130,7 +130,7 @@ template<typename CharT>
 constexpr void remove_suffix ( std::basic_string_view<CharT> & s, bool & removed, std::basic_string_view<CharT> x ) noexcept {
     if ( s.size ( ) >= x.size ( ) and s.compare ( s.size ( ) - x.size ( ), std::basic_string_view<CharT>::npos, x ) == 0 ) {
         s.remove_suffix ( x.size ( ) );
-        removed = removed or true;
+        removed = true;
     };
 }
 template<typename CharT>
@@ -167,8 +167,10 @@ template<typename CharT, typename ... Args>
 namespace sax {
 
 template<typename CharT, typename ... Delimiters>
-[[ nodiscard ]] std::vector<std::basic_string_view<CharT>> string_split ( const std::basic_string<CharT> & string_, Delimiters ... delimiters_ ) {
+[[ nodiscard ]] std::vector<std::basic_string_view<CharT>> string_split ( const std::basic_string<CharT> & string_, Delimiters && ... delimiters_ ) {
     using size_type = typename std::basic_string_view<CharT>::size_type;
+    if ( string_.empty ( ) )
+        return { string_ };
     std::basic_string_view<CharT> string_view ( string_ );
     std::vector<std::basic_string_view<CharT>> string_view_vector;
     string_view_vector.reserve ( 4 ); // Avoid small size re-allocating, 0 > 1 > 2 > 3 > 4 > 6, now 4 > 6 > 9 etc.
