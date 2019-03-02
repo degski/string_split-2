@@ -86,15 +86,15 @@ template<typename CharT>
 */
 
 template<typename CharT>
-[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( std::basic_string_view<CharT> & x ) noexcept {
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( const std::basic_string_view<CharT> & x ) noexcept {
     return x; // guaranteed copy elision.
 }
 template<typename CharT>
-[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( CharT & x ) noexcept {
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( const CharT & x ) noexcept {
     return std::basic_string_view<CharT> ( std::addressof ( x ), 1 );
 }
 template<typename CharT>
-[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( const CharT * & x ) noexcept {
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( const CharT * const & x ) noexcept {
     return std::basic_string_view<CharT> ( x );
 }
 
@@ -147,12 +147,12 @@ template<typename CharT, typename ... Args>
 
 
 template <typename CharT, typename ... Delimiters, std::size_t ... I>
-auto make_string_views ( const std::tuple<Delimiters & ... > & delimiters_, std::index_sequence<I...> ) {
+auto make_string_views ( const std::tuple<const Delimiters & ... > & delimiters_, std::index_sequence<I...> ) {
     return std::make_tuple ( make_string_view<CharT> ( std::get<I> ( delimiters_ ) ) ... );
 }
 template <typename CharT, typename ... Delimiters>
-auto make_string_views ( Delimiters & ... delimiters_ ) {
-    return make_string_views<CharT> ( std::forward_as_tuple ( std::forward<Delimiters&> ( delimiters_ ) ... ), std::make_index_sequence<sizeof ... ( Delimiters )> ( ) );
+auto make_string_views ( const Delimiters & ... delimiters_ ) {
+    return make_string_views<CharT> ( std::forward_as_tuple ( std::forward<const Delimiters&> ( delimiters_ ) ... ), std::make_index_sequence<sizeof ... ( Delimiters )> ( ) );
 }
 
 }
@@ -167,7 +167,7 @@ template<typename CharT, typename ... Delimiters>
     std::basic_string_view<CharT> string_view ( string_ );
     std::vector<std::basic_string_view<CharT>> string_view_vector;
     string_view_vector.reserve ( 4 ); // Avoid small size re-allocating, 0 > 1 > 2 > 3 > 4 > 6, now 4 > 6 > 9 etc.
-    std::tuple params = detail::make_string_views<CharT> ( std::forward<Delimiters&> ( delimiters_  ) ... );
+    std::tuple params = detail::make_string_views<CharT> ( std::forward<const Delimiters&> ( delimiters_  ) ... );
     // Parse the string_view left to right.
     while ( true ) {
         const size_type pos = std::apply ( [ & string_view ] ( auto && ... args ) {
