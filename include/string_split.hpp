@@ -155,14 +155,14 @@ template<typename CharT, typename ... Args>
 }
 
 template<typename CharT, typename SizeT>
-constexpr void anymatches ( std::basic_string_view<CharT> & s, SizeT & length, const std::basic_string_view<CharT> x ) noexcept {
+constexpr void any_matches ( std::basic_string_view<CharT> & s, SizeT & length, const std::basic_string_view<CharT> x ) noexcept {
     if ( s.size ( ) >= x.size ( ) and s.compare ( 0, x.size ( ), x ) == 0 )
         length = x.size ( );
 }
 template<typename CharT, typename ... Args>
-[[ nodiscard ]] constexpr auto anymatches ( std::basic_string_view<CharT> & s_, Args && ... args_ ) noexcept {
-    decltype ( std::basic_string_view<CharT>::npos ) found = 0;
-    ( anymatches ( s_, found, std::forward<Args> ( args_ ) ), ... );
+[[ nodiscard ]] constexpr auto any_matches ( std::basic_string_view<CharT> & s_, Args && ... args_ ) noexcept {
+    typename std::basic_string_view<CharT>::size_type found = 0;
+    ( any_matches ( s_, found, std::forward<Args> ( args_ ) ), ... );
     return found;
 }
 
@@ -178,22 +178,21 @@ template<typename CharT, typename ... Delimiters>
     std::basic_string_view<CharT> string_view ( string_ );
     std::vector<std::basic_string_view<CharT>> string_view_vector;
     string_view_vector.reserve ( 4 ); // Avoid small size re-allocating, 0 > 1 > 2 > 3 > 4 > 6, now 4 > 6 > 9 etc.
-    const auto anymatches = [ & string_view ] ( auto && ... args ) noexcept {
-        return detail::anymatches ( string_view, std::forward<decltype ( args )> ( args ) ... );
+    const auto any_matches = [ & string_view ] ( auto && ... args ) noexcept {
+        return detail::any_matches ( string_view, std::forward<decltype ( args )> ( args ) ... );
     };
     const std::tuple params = detail::make_string_views<CharT> ( std::forward<const Delimiters&> ( delimiters_ ) ... );
-    // Parse the string_view left to right.
-    while ( true ) {
-        const size_type pos = std::apply ( anymatches, params );
-
-
-        if ( std::basic_string_view<CharT>::npos == pos ) {
-            if ( string_view.size ( ) )
-                string_view_vector.emplace_back ( std::move ( string_view ) );
-            break;
+    while ( string_view.size ( ) ) {
+        auto match_length = std::apply ( any_matches, params );
+        while ( match_length ) {
+            string_view.remove_prefix ( match_length );
+            match_length = std::apply ( any_matches, params );
         }
-        string_view_vector.emplace_back ( string_view.data ( ), pos );
-        string_view.remove_prefix ( pos );
+        auto start = string_view.data ( );
+        do {
+            string_view.remove_prefix ( 1 );
+        } while ( not ( std::apply ( any_matches, params ) ) );
+        string_view_vector.emplace_back ( start, string_view.data ( ) - start );
     }
     return string_view_vector;
 }
