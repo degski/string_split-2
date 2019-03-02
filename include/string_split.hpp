@@ -155,15 +155,16 @@ template<typename CharT, typename ... Args>
 }
 
 template<typename CharT, typename SizeT>
-constexpr void any_matches ( std::basic_string_view<CharT> & s, SizeT & length, const std::basic_string_view<CharT> x ) noexcept {
-    if ( s.size ( ) >= x.size ( ) and s.compare ( 0, x.size ( ), x ) == 0 )
-        length = x.size ( );
+constexpr void match ( std::basic_string_view<CharT> & s_, SizeT & match_length_, const std::basic_string_view<CharT> x_ ) noexcept {
+    if ( s_.size ( ) >= x_.size ( ) and s_.compare ( 0, x_.size ( ), x_ ) == 0 )
+        match_length_ = x_.size ( );
 }
 template<typename CharT, typename ... Args>
 [[ nodiscard ]] constexpr auto any_matches ( std::basic_string_view<CharT> & s_, Args && ... args_ ) noexcept {
-    typename std::basic_string_view<CharT>::size_type found = 0;
-    ( any_matches ( s_, found, std::forward<Args> ( args_ ) ), ... );
-    return found;
+    using size_type = typename std::basic_string_view<CharT>::size_type;
+    size_type match_length = 0;
+    ( match ( s_, match_length, std::forward<Args> ( args_ ) ), ... );
+    return match_length;
 }
 
 }
@@ -178,16 +179,16 @@ template<typename CharT, typename ... Delimiters>
     std::basic_string_view<CharT> string_view ( string_ );
     std::vector<std::basic_string_view<CharT>> string_view_vector;
     string_view_vector.reserve ( 4 ); // Avoid small size re-allocating, 0 > 1 > 2 > 3 > 4 > 6, now 4 > 6 > 9 etc.
-    const auto any_matches = [ & string_view ] ( auto && ... args ) noexcept {
+    auto any_matches = [ & string_view ] ( auto && ... args ) noexcept {
         return detail::any_matches ( string_view, std::forward<decltype ( args )> ( args ) ... );
     };
     const std::tuple params = detail::make_string_views<CharT> ( std::forward<const Delimiters&> ( delimiters_ ) ... );
     while ( string_view.size ( ) ) {
-        auto match_length = std::apply ( any_matches, params );
-        while ( match_length ) {
-            string_view.remove_prefix ( match_length );
+        size_type match_length;
+        do {
             match_length = std::apply ( any_matches, params );
-        }
+            string_view.remove_prefix ( match_length );
+        } while ( match_length );
         auto start = string_view.data ( );
         do {
             string_view.remove_prefix ( 1 );
