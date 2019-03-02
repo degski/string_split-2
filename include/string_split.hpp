@@ -100,7 +100,7 @@ template<typename CharT>
 
 
 template<typename CharT>
-constexpr void remove_prefix ( std::basic_string_view<CharT> & s, bool & removed, std::basic_string_view<CharT> x ) noexcept {
+constexpr void remove_prefix ( std::basic_string_view<CharT> & s, bool & removed, const std::basic_string_view<CharT> x ) noexcept {
     if ( s.size ( ) >= x.size ( ) and s.compare ( 0, x.size ( ), x ) == 0 ) {
         s.remove_prefix ( x.size ( ) );
         removed = true;
@@ -117,7 +117,7 @@ constexpr void remove_prefix ( std::basic_string_view<CharT> & s_, Args && ... a
 
 
 template<typename CharT>
-constexpr void remove_suffix ( std::basic_string_view<CharT> & s, bool & removed, std::basic_string_view<CharT> x ) noexcept {
+constexpr void remove_suffix ( std::basic_string_view<CharT> & s, bool & removed, const std::basic_string_view<CharT> x ) noexcept {
     if ( s.size ( ) >= x.size ( ) and s.compare ( s.size ( ) - x.size ( ), std::basic_string_view<CharT>::npos, x ) == 0 ) {
         s.remove_suffix ( x.size ( ) );
         removed = true;
