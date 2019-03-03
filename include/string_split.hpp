@@ -29,6 +29,7 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <functional>
 #include <sax/iostream.hpp>
 #include <string>
@@ -63,38 +64,38 @@ void print ( const std::vector<T> & string_vector_ ) noexcept {
 namespace sax::detail {
 
 template<typename CharT>
-[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( std::basic_string_view<CharT> const & x ) noexcept {
-    return x; // guaranteed copy elision.
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( std::basic_string_view<CharT> const & x_ ) noexcept {
+    return x_; // guaranteed copy elision.
 }
 template<typename CharT>
-[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( CharT const & x ) noexcept {
-    return std::basic_string_view<CharT> ( std::addressof ( x ), 1 );
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( CharT const & x_ ) noexcept {
+    return std::basic_string_view<CharT> ( std::addressof ( x_ ), 1 );
 }
 template<typename CharT>
-[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( CharT const * const & x ) noexcept {
-    return std::basic_string_view<CharT> ( x );
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( CharT const * const & x_ ) noexcept {
+    return std::basic_string_view<CharT> ( x_ );
 }
 
 
 // From https://stackoverflow.com/a/40030044/646940
 
 template<typename Array, typename SizeT>
-constexpr void sort_impl ( Array & array, SizeT left, SizeT right ) {
-    if ( left < right ) {
-        SizeT m = left;
-        for ( SizeT i = left + 1; i < right; i++ )
-            if ( array [ i ] < array [ left ] )
-                swap ( array [ ++m ], array [ i ] );
-        std::swap ( array [ left ], array [ m ] );
-        sort_impl ( array, left, m );
-        sort_impl ( array, m + 1, right );
+constexpr void sort_impl ( Array & array_, SizeT left_, SizeT right_ ) {
+    if ( left_ < right_ ) {
+        SizeT m = left_;
+        for ( SizeT i = left_ + 1; i < right_; i++ )
+            if ( array_ [ i ] < array_ [ left_ ] )
+                std::swap ( array_ [ ++m ], array_ [ i ] );
+        std::swap ( array_ [ left_ ], array_ [ m ] );
+        sort_impl ( array_, left_, m );
+        sort_impl ( array_, m + 1, right_ );
     }
 }
 
 template<typename Array>
-constexpr Array sort ( Array array ) {
-    auto sorted = array;
-    sort_impl ( sorted, 0, Array::size ( ) );
+constexpr Array sort ( Array array_ ) {
+    auto sorted = array_;
+    sort_impl ( sorted, typename Array::size_type ( 0 ), Array::size ( ) );
     return sorted;
 }
 
@@ -104,8 +105,9 @@ struct StringViewArray {
     using size_type = typename std::basic_string_view<CharT>::size_type;
     template<typename ... Delimiters>
     constexpr StringViewArray ( Delimiters const & ... delimiters_ ) noexcept :
-        data { make_string_view<CharT> ( delimiters_ ) ... } {
-    }
+        data { make_string_view<CharT> ( delimiters_ ) ... } { }
+    constexpr StringViewArray ( const StringViewArray & array_ ) noexcept :
+        data ( array_.data ) { }
     constexpr std::basic_string_view<CharT> const & operator [ ] ( std::size_t i_ ) const noexcept {
         return data [ i_ ];
     }
@@ -113,13 +115,13 @@ struct StringViewArray {
         return static_cast<size_type> ( Size );
     }
     constexpr std::basic_string_view<CharT> const * begin ( ) const noexcept {
-        return data;
+        return data.data ( );
     }
     constexpr std::basic_string_view<CharT> const * end ( ) const noexcept {
-        return data + Size;
+        return data.data ( ) + Size;
     }
     private:
-    std::basic_string_view<CharT> data [ Size ];
+    std::array<std::basic_string_view<CharT>, Size> data;
 };
 
 
@@ -150,7 +152,8 @@ template<typename CharT, typename ... Delimiters>
     if ( string_.empty ( ) )
         return { };
     std::basic_string_view<CharT> string_view ( string_ );
-    const detail::StringViewArray<CharT, sizeof ... ( Delimiters )> params ( delimiters_ ... );
+    using sva = detail::StringViewArray<CharT, sizeof ... ( Delimiters )>;
+    const sva params ( detail::sort ( sva ( delimiters_ ... ) ) );
     std::vector<std::basic_string_view<CharT>> string_view_vector;
     string_view_vector.reserve ( 4 ); // Avoid small size re-allocating, 0 > 1 > 2 > 3 > 4 > 6, now 4 > 6 > 9 etc.
     while ( true ) {
