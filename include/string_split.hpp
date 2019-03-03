@@ -120,9 +120,9 @@ template<typename CharT, typename ... Delimiters>
     if ( string_.empty ( ) )
         return { };
     std::basic_string_view<CharT> string_view ( string_ );
+    const detail::StringViewArray<CharT, sizeof ... ( Delimiters )> params ( delimiters_ ... );
     std::vector<std::basic_string_view<CharT>> string_view_vector;
     string_view_vector.reserve ( 4 ); // Avoid small size re-allocating, 0 > 1 > 2 > 3 > 4 > 6, now 4 > 6 > 9 etc.
-    const detail::StringViewArray<CharT, sizeof ... ( Delimiters )> params ( delimiters_ ... );
     while ( true ) {
         while ( const auto match_length = detail::any_matches ( string_view, params ) )
             string_view.remove_prefix ( match_length );
