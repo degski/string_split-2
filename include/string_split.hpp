@@ -99,6 +99,7 @@ template<typename CharT, typename SizeT>
         return x_.size ( );
     return 0;
 }
+
 template<typename CharT, typename Array>
 [[ nodiscard ]] constexpr auto any_matches ( std::basic_string_view<CharT> const & s_, Array const & array_ ) noexcept {
     using size_type = typename std::basic_string_view<CharT>::size_type;
@@ -116,7 +117,6 @@ namespace sax {
 
 template<typename CharT, typename ... Delimiters>
 [[ nodiscard ]] std::vector<std::basic_string_view<CharT>> string_split ( std::basic_string<CharT> const & string_, Delimiters const ... delimiters_ ) {
-    using size_type = typename std::basic_string_view<CharT>::size_type;
     if ( string_.empty ( ) )
         return { };
     std::basic_string_view<CharT> string_view ( string_ );
@@ -124,11 +124,8 @@ template<typename CharT, typename ... Delimiters>
     string_view_vector.reserve ( 4 ); // Avoid small size re-allocating, 0 > 1 > 2 > 3 > 4 > 6, now 4 > 6 > 9 etc.
     const detail::StringViewArray<CharT, sizeof ... ( Delimiters )> params ( delimiters_ ... );
     while ( true ) {
-        size_type match_length;
-        do {
-            match_length = detail::any_matches ( string_view, params );
+        while ( const auto match_length = detail::any_matches ( string_view, params ) )
             string_view.remove_prefix ( match_length );
-        } while ( match_length );
         if ( string_view.empty ( ) )
             break;
         const auto match_start = string_view.data ( );
