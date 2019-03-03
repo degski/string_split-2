@@ -26,19 +26,8 @@
 #include <cstdint>
 #include <cstdlib>
 
-#include <array>
-#include <filesystem>
-#include <fstream>
 #include <iostream>
-#include <iterator>
-#include <list>
-#include <map>
-#include <random>
 #include <string>
-#include <type_traits>
-#include <vector>
-
-namespace fs = std::filesystem;
 
 #include <string_split.hpp>
 
@@ -55,26 +44,17 @@ Stream & operator << ( Stream & out_, const Container & s_ ) noexcept {
 int main ( ) {
 
     std::string s1 ( " , \t the quick brown ,, ,fox jumps underover \t  , the lazy dog" );
-
     std::cout << sax::string_split ( s1, " ", ',' , "\t", "under" ) << nl;
 
     std::string s2 ( "aaba" );
-
     std::cout << sax::string_split ( s2, "a", "ab" ) << nl;
 
     return EXIT_SUCCESS;
 }
 
+/* Output
 
-/*
-
-template <typename CharT, typename ... Delimiters, std::size_t ... I>
-auto make_string_views ( const std::tuple<Delimiters ... > & delimiters_, std::index_sequence<I...> ) {
-    return std::make_tuple ( sax::detail::make_string_view<CharT> ( std::get<I> ( delimiters_ ) ) ... );
-}
-template <typename CharT, typename ... Delimiters>
-auto make_string_views ( Delimiters ... delimiters_ ) {
-    return make_string_views<CharT> ( std::forward_as_tuple ( delimiters_ ... ), std::make_index_sequence<sizeof ... ( Delimiters )> ( ) );
-}
+    "the" "quick" "brown" "fox" "jumps" "over" "the" "lazy" "dog"
+    "b"
 
 */

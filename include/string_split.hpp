@@ -21,6 +21,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+
+// The basis for wrting this function was laid in:
+// https://codereview.stackexchange.com/a/214563/194172
+
+
 #pragma once
 
 #include <algorithm>
