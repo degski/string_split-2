@@ -58,15 +58,15 @@ void print ( const std::vector<T> & string_vector_ ) noexcept {
 namespace sax::detail {
 
 template<typename CharT>
-[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( const std::basic_string_view<CharT> & x ) noexcept {
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( std::basic_string_view<CharT> const & x ) noexcept {
     return x; // guaranteed copy elision.
 }
 template<typename CharT>
-[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( const CharT & x ) noexcept {
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( CharT const & x ) noexcept {
     return std::basic_string_view<CharT> ( std::addressof ( x ), 1 );
 }
 template<typename CharT>
-[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( const CharT * const & x ) noexcept {
+[[ nodiscard ]] constexpr std::basic_string_view<CharT> make_string_view ( CharT const * const & x ) noexcept {
     return std::basic_string_view<CharT> ( x );
 }
 
@@ -80,7 +80,7 @@ struct StringViewArray {
     constexpr std::basic_string_view<CharT> const & operator [ ] ( std::size_t i_ ) const noexcept {
         return data [ i_ ];
     }
-    constexpr static size_type size ( ) {
+    constexpr static size_type size ( ) noexcept {
         return static_cast<size_type> ( Size );
     }
     private:
@@ -89,14 +89,13 @@ struct StringViewArray {
 
 
 template<typename CharT, typename SizeT>
-[[ nodiscard ]] constexpr SizeT match ( std::basic_string_view<CharT> & s_, std::basic_string_view<CharT> const & x_ ) noexcept {
+[[ nodiscard ]] constexpr SizeT match ( std::basic_string_view<CharT> const & s_, std::basic_string_view<CharT> const & x_ ) noexcept {
     if ( s_.size ( ) >= x_.size ( ) and s_.compare ( 0, x_.size ( ), x_ ) == 0 )
         return x_.size ( );
     return 0;
 }
-
 template<typename CharT, typename Array>
-[[ nodiscard ]] constexpr auto any_matches ( std::basic_string_view<CharT> & s_, const Array & array_ ) noexcept {
+[[ nodiscard ]] constexpr auto any_matches ( std::basic_string_view<CharT> const & s_, Array const & array_ ) noexcept {
     using size_type = typename std::basic_string_view<CharT>::size_type;
     size_type match_length = 0;
     for ( size_type i = 0; i < Array::size ( ); ++i )
@@ -111,27 +110,28 @@ template<typename CharT, typename Array>
 namespace sax {
 
 template<typename CharT, typename ... Delimiters>
-[[ nodiscard ]] std::vector<std::basic_string_view<CharT>> string_split ( const std::basic_string<CharT> & string_, const Delimiters ... delimiters_ ) {
+[[ nodiscard ]] std::vector<std::basic_string_view<CharT>> string_split ( std::basic_string<CharT> const & string_, Delimiters const ... delimiters_ ) {
     using size_type = typename std::basic_string_view<CharT>::size_type;
     if ( string_.empty ( ) )
         return { };
     std::basic_string_view<CharT> string_view ( string_ );
     std::vector<std::basic_string_view<CharT>> string_view_vector;
     string_view_vector.reserve ( 4 ); // Avoid small size re-allocating, 0 > 1 > 2 > 3 > 4 > 6, now 4 > 6 > 9 etc.
-    detail::StringViewArray<CharT, sizeof ... ( Delimiters )> params ( delimiters_ ... );
-    do {
+    const detail::StringViewArray<CharT, sizeof ... ( Delimiters )> params ( delimiters_ ... );
+    while ( true ) {
         size_type match_length;
         do {
             match_length = detail::any_matches ( string_view, params );
             string_view.remove_prefix ( match_length );
         } while ( match_length );
+        if ( string_view.empty ( ) )
+            break;
         const auto match_start = string_view.data ( );
         do {
             string_view.remove_prefix ( 1 );
-        } while ( not ( detail::any_matches ( string_view, params ) ) );
+        } while ( string_view.size ( ) and not ( detail::any_matches ( string_view, params ) ) );
         string_view_vector.emplace_back ( match_start, string_view.data ( ) - match_start );
-        std::cout << string_view_vector.back ( ) << nl;
-    } while ( string_view.size ( ) );
+    }
     return string_view_vector;
 }
 
