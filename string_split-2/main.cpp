@@ -52,7 +52,11 @@ Stream & operator << ( Stream & out_, const Container & s_ ) noexcept {
 }
 
 
+
+
 int main ( ) {
+
+
 
     std::string s1 ( " , \t the quick brown ,, ,fox jumps underover \t  , the lazy dog" );
 
