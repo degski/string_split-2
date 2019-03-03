@@ -8,7 +8,7 @@ A string splitter allowing for strings to be used as delimiters.
     [[ nodiscard ]] std::vector<std::basic_string_view<CharT>> string_split ( std::basic_string<CharT> const & string_, Delimiters const ... delimiters_ );
 
 
-What the function does: Remove from the string any delimiters passed in, doing that left to right, applying the delimiters left to right and return the now separate bits left as a vector of string_view's over the original string. The latter means the string has to outlive the vector of string views.
+What the function does: Remove from the string any delimiters passed in, doing that left to right, applying the delimiters left to right and return the now separate bits left as a `std::vector` of string_view's over the original string. The latter means the string has to outlive the vector of string views.
 
 The above does means that depending on what kind of delimiters you put (as they can be strings, which can interact with each other), that the order of the delimiters has significance.
 Just pass in a STL-string, followed by a number of delimiters (string-literals or characters).
