@@ -76,17 +76,47 @@ template<typename CharT>
 }
 
 
+// From https://stackoverflow.com/a/40030044/646940
+
+template<typename Array, typename SizeT>
+constexpr void sort_impl ( Array & array, SizeT left, SizeT right ) {
+    if ( left < right ) {
+        SizeT m = left;
+        for ( SizeT i = left + 1; i < right; i++ )
+            if ( array [ i ] < array [ left ] )
+                swap ( array [ ++m ], array [ i ] );
+        std::swap ( array [ left ], array [ m ] );
+        sort_impl ( array, left, m );
+        sort_impl ( array, m + 1, right );
+    }
+}
+
+template<typename Array>
+constexpr Array sort ( Array array ) {
+    auto sorted = array;
+    sort_impl ( sorted, 0, Array::size ( ) );
+    return sorted;
+}
+
+
 template <typename CharT, std::size_t Size>
 struct StringViewArray {
     using size_type = typename std::basic_string_view<CharT>::size_type;
     template<typename ... Delimiters>
     constexpr StringViewArray ( Delimiters const & ... delimiters_ ) noexcept :
-        data { make_string_view<CharT> ( delimiters_ ) ... } { }
+        data { make_string_view<CharT> ( delimiters_ ) ... } {
+    }
     constexpr std::basic_string_view<CharT> const & operator [ ] ( std::size_t i_ ) const noexcept {
         return data [ i_ ];
     }
     constexpr static size_type size ( ) noexcept {
         return static_cast<size_type> ( Size );
+    }
+    constexpr std::basic_string_view<CharT> const * begin ( ) const noexcept {
+        return data;
+    }
+    constexpr std::basic_string_view<CharT> const * end ( ) const noexcept {
+        return data + Size;
     }
     private:
     std::basic_string_view<CharT> data [ Size ];
