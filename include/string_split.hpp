@@ -153,7 +153,7 @@ template<typename CharT, typename ... Delimiters>
         return { };
     std::basic_string_view<CharT> string_view ( string_ );
     using sva = detail::StringViewArray<CharT, sizeof ... ( Delimiters )>;
-    const sva params ( detail::sort ( sva ( delimiters_ ... ) ) );
+    const sva params ( delimiters_ ... );
     std::vector<std::basic_string_view<CharT>> string_view_vector;
     string_view_vector.reserve ( 4 ); // Avoid small size re-allocating, 0 > 1 > 2 > 3 > 4 > 6, now 4 > 6 > 9 etc.
     while ( true ) {
