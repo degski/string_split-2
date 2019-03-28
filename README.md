@@ -10,9 +10,9 @@ A string splitter allowing for strings to be used as delimiters.
 
 What the function does: Remove from the string any delimiters passed in, doing that left to right, applying the delimiters left to right and return the now separate bits left as a `std::vector` of string_view's over the original string. The latter means the string has to outlive the vector of string views.
 
-The above does means that depending on what kind of delimiters you put (as they can be strings, which can interact with each other), that the order of the delimiters has significance.
-Just pass in a STL-string, followed by a number of delimiters (string-literals or characters).
+What the function does: Remove from the string any delimiters passed in, doing that left to right, applying the delimiters left to right and return the now separate bits left as a `std::vector` of `std::string_view` 's over the original `std::string`. The latter means the string has to outlive the vector of string views.
 
+The above does mean that depending on what kind of delimiters you put (as they can be strings, which can interact with each other), the order of the delimiters has significance.
 
     std::string s { "Cheech and Chong" };
     auto vector = sax::string_split ( s, "and" );
@@ -43,4 +43,4 @@ returns a vector of string_views "Cheech and" and "Chong".
 
 ### Dependencies
 
-* [Sax](https://github.com/degski/sax/)
+* [Sax](https://github.com/degski/sax/) (This library is included in Sax (as a single header), this repo is just for development)
